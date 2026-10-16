@@ -60,6 +60,31 @@ body {
   opacity: 1;
 }
 
+/* --- center-pane lint status chip (footer) ----------------------------------- */
+
+.mf-lint-status {
+  margin-right: 14px;
+  font-size: 0.88em;
+  user-select: none;
+}
+
+.mf-lint-checking,
+.mf-lint-unavailable {
+  opacity: 0.55;
+}
+
+.mf-lint-ok {
+  color: var(--vscode-testing-iconPassed, #4ec94e);
+}
+
+.mf-lint-warning {
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.mf-lint-error {
+  color: var(--vscode-errorForeground, #f48771);
+}
+
 button {
   padding: 3px 10px;
   border: 1px solid var(--vscode-button-border, transparent);

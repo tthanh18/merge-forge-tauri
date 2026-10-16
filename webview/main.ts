@@ -21,8 +21,8 @@ import { createPanes, type Panes } from './editors';
 import { createExplainDrawer, type ExplainDrawer } from './explainDrawer';
 import { createHistoryView, type HistoryView } from './historyView';
 import { buildLayout } from './layout';
-import { configureMonacoWorker } from './monaco';
-import type { monaco } from './monaco';
+import { checkSyntax, type SyntaxIssue } from './lint';
+import { configureMonacoWorker, monaco } from './monaco';
 import type { PaneName } from './panes';
 import { syncScrolling } from './scrollSync';
 import { ChunkStore } from './state';
@@ -78,6 +78,12 @@ let cursor = -1;
 let flashTimer: number | undefined;
 /** Last applied base↔center mapping, so the margin only repaints when ranges move. */
 let lineNumbersSignature = '';
+/** Debounce timer for center-pane syntax checking. */
+let lintTimer: number | undefined;
+/** The footer status chip: "✓", "…", or "⚠ 2 errors". */
+let lintStatus: HTMLElement | undefined;
+/** Monaco marker owner for lint results — reusing it replaces the previous set. */
+const LINT_OWNER = 'mergeForge.lint';
 
 /** Word-level emphasis per chunk, computed once — base and side texts never change. */
 function computeWordRanges(chunks: readonly Chunk[], payload: InitPayload) {
@@ -295,6 +301,94 @@ function postState(): void {
   if (dirty) {
     scheduleWorkSnapshot();
   }
+}
+
+/** Runs the local syntax check on the result, debounced past the edit burst. */
+function scheduleLint(): void {
+  window.clearTimeout(lintTimer);
+  setLintStatus('checking');
+  lintTimer = window.setTimeout(() => {
+    if (!session) {
+      return;
+    }
+    const content = session.store.result();
+    const issues = checkSyntax(session.payload.languageId, session.payload.filePath, content);
+    applyLintMarkers(issues);
+  }, 400);
+}
+
+/** Renders syntax issues as squiggles in the center pane and updates the footer chip. */
+function applyLintMarkers(issues: SyntaxIssue[] | null): void {
+  if (!session) {
+    return;
+  }
+  const model = session.panes.center.getModel();
+  if (!model) {
+    return;
+  }
+  if (issues === null) {
+    monaco.editor.setModelMarkers(model, LINT_OWNER, []);
+    setLintStatus('unavailable');
+    return;
+  }
+  const markers = issues.map((issue) => {
+    const startLineNumber = issue.startLine + 1;
+    const startColumn = issue.startCharacter + 1;
+    const endLineNumber = issue.endLine + 1;
+    // Zero-width issues (pure insertion points) still need a visible squiggle.
+    const endColumn =
+      startLineNumber === endLineNumber && issue.endCharacter + 1 <= startColumn
+        ? startColumn + 1
+        : issue.endCharacter + 1;
+    return {
+      startLineNumber,
+      startColumn,
+      endLineNumber,
+      endColumn,
+      message: issue.message,
+      severity: monaco.MarkerSeverity.Error,
+    };
+  });
+  monaco.editor.setModelMarkers(model, LINT_OWNER, markers);
+  setLintStatus({ errors: issues.length, warnings: 0 });
+}
+
+function setLintStatus(
+  state: 'checking' | 'unavailable' | { errors: number; warnings: number },
+): void {
+  if (!lintStatus) {
+    return;
+  }
+  if (state === 'checking') {
+    lintStatus.textContent = '…';
+    lintStatus.className = 'mf-lint-status mf-lint-checking';
+    lintStatus.title = 'Checking the result for syntax errors';
+    return;
+  }
+  if (state === 'unavailable') {
+    lintStatus.textContent = 'lint: n/a';
+    lintStatus.className = 'mf-lint-status mf-lint-unavailable';
+    lintStatus.title = 'Syntax checking is available for TypeScript, JavaScript, and JSON';
+    return;
+  }
+  const { errors, warnings } = state;
+  if (errors === 0 && warnings === 0) {
+    lintStatus.textContent = '✓';
+    lintStatus.className = 'mf-lint-status mf-lint-ok';
+    lintStatus.title = 'No problems in the result';
+    return;
+  }
+  const parts: string[] = [];
+  if (errors > 0) {
+    parts.push(`${errors} error${errors === 1 ? '' : 's'}`);
+  }
+  if (warnings > 0) {
+    parts.push(`${warnings} warning${warnings === 1 ? '' : 's'}`);
+  }
+  lintStatus.textContent = `⚠ ${parts.join(' · ')}`;
+  lintStatus.className =
+    errors > 0 ? 'mf-lint-status mf-lint-error' : 'mf-lint-status mf-lint-warning';
+  lintStatus.title = 'Problems in the result — hover a squiggle for details';
 }
 
 /** Crash-safety: ship the current work to the host, debounced past the edit burst. */
@@ -870,6 +964,15 @@ function start(payload: InitPayload): void {
     flashChunkId: undefined,
     hoverChunkId: undefined,
   };
+
+  // Syntax feedback: a footer status chip plus squiggles in the editable result pane.
+  // Every center edit re-runs the local parser after the edit burst settles.
+  lintStatus = document.createElement('span');
+  lintStatus.className = 'mf-lint-status mf-lint-checking';
+  lintStatus.textContent = '…';
+  layout.footer.prepend(lintStatus);
+  panes.center.getModel()?.onDidChangeContent(() => scheduleLint());
+  scheduleLint();
 
   syncScrolling(panes, redrawConnectors);
   window.addEventListener('resize', redrawConnectors);
