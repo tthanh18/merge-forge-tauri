@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merge Forge</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --vscode-editor-background: #1f1f1f;
+        --vscode-editor-foreground: #cccccc;
+        --vscode-foreground: #cccccc;
+        --vscode-font-family: -apple-system, 'Segoe UI', sans-serif;
+        --vscode-font-size: 13px;
+        --vscode-editor-font-family: Menlo, ui-monospace, monospace;
+        --vscode-editorLineNumber-foreground: #6e7681;
+        --vscode-editorLineNumber-activeForeground: #cccccc;
+        --vscode-editor-selectionBackground: #264f78;
+        --vscode-editorCursor-foreground: #aeafad;
+        --vscode-panel-border: #2b2b2b;
+        --vscode-button-background: #0e639c;
+        --vscode-button-foreground: #ffffff;
+        --vscode-button-hoverBackground: #1177bb;
+        --vscode-button-secondaryBackground: #313131;
+        --vscode-button-secondaryForeground: #cccccc;
+        --vscode-editorGroupHeader-tabsBackground: #181818;
+        --vscode-inputValidation-warningBackground: #4d3800;
+        --vscode-inputValidation-warningBorder: #806300;
+        --vscode-testing-iconPassed: #4ec94e;
+        --vscode-editorWidget-background: #252526;
+        --vscode-dropdown-background: #3c3c3c;
+        --vscode-dropdown-foreground: #f0f0f0;
+        --vscode-focusBorder: #4daafc;
+        --vscode-textLink-foreground: #3794ff;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          color-scheme: light;
+          --vscode-editor-background: #ffffff;
+          --vscode-editor-foreground: #3b3b3b;
+          --vscode-foreground: #3b3b3b;
+          --vscode-editorLineNumber-foreground: #98a0a8;
+          --vscode-editorLineNumber-activeForeground: #3b3b3b;
+          --vscode-editor-selectionBackground: #add6ff;
+          --vscode-panel-border: #d4d4d4;
+          --vscode-button-secondaryBackground: #e5e5e5;
+          --vscode-button-secondaryForeground: #3b3b3b;
+          --vscode-editorGroupHeader-tabsBackground: #f8f8f8;
+          --vscode-editorWidget-background: #f8f8f8;
+          --vscode-dropdown-background: #ffffff;
+          --vscode-dropdown-foreground: #3b3b3b;
+          --vscode-inputValidation-warningBackground: #fff4ce;
+          --vscode-inputValidation-warningBorder: #c4a000;
+        }
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--vscode-editor-background);
+        color: var(--vscode-foreground);
+        font-family: var(--vscode-font-family);
+      }
+      .boot-error {
+        box-sizing: border-box;
+        max-width: 640px;
+        margin: 12vh auto;
+        padding: 0 24px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      .boot-error h1 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 12px;
+      }
+    </style>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const invoke = window.__TAURI__.core.invoke;
+      let payload = null;
+      let dirty = false;
+      let unresolved = 0;
+
+      function emit(message) {
+        window.dispatchEvent(new MessageEvent('message', { data: message }));
+      }
+
+      window.__mergeForge = { workerUri: 'editor.worker.js' };
+      window.acquireVsCodeApi = () => ({
+        postMessage(message) {
+          if (message.type === 'ready' && payload) {
+            emit({ type: 'init', payload });
+            return;
+          }
+          if (message.type === 'state') {
+            dirty = message.payload.dirty;
+            unresolved = message.payload.unresolvedConflicts;
+            return;
+          }
+          if (message.type === 'apply') {
+            if (
+              unresolved > 0 &&
+              !confirm(
+                unresolved +
+                  (unresolved === 1 ? ' conflict is' : ' conflicts are') +
+                  ' still unresolved. Apply anyway? Unresolved chunks keep the base text.',
+              )
+            ) {
+              return;
+            }
+            invoke('apply_result', message.payload).catch((error) => {
+              alert('Could not apply: ' + error);
+            });
+            return;
+          }
+          if (message.type === 'abort') {
+            if (dirty && !confirm('Discard this merge? The file stays conflicted.')) {
+              return;
+            }
+            invoke('abort_merge');
+            return;
+          }
+          if (message.type === 'blame') {
+            emit({ type: 'blameResult', payload: [] });
+            return;
+          }
+          if (message.type === 'history' && payload) {
+            emit({
+              type: 'historyData',
+              payload: {
+                entries: [],
+                branches: { yours: payload.labels.left, theirs: payload.labels.right },
+              },
+            });
+            return;
+          }
+          if (
+            message.type === 'explain' ||
+            message.type === 'aiResolve' ||
+            message.type === 'aiAsk' ||
+            message.type === 'openAiSetup'
+          ) {
+            emit({
+              type: 'explainError',
+              unconfigured: true,
+              message: 'AI resolve is not in the Fork app. Accept chunks in the gutters, then Apply.',
+            });
+          }
+        },
+      });
+
+      invoke('boot').then((boot) => {
+        if (boot.kind !== 'ready') {
+          const app = document.getElementById('app');
+          app.className = 'boot-error';
+          const title = document.createElement('h1');
+          title.textContent = 'Merge Forge';
+          const body = document.createElement('p');
+          body.textContent = boot.message;
+          app.append(title, body);
+          return;
+        }
+        payload = boot.payload;
+        const script = document.createElement('script');
+        script.src = 'main.js';
+        document.body.append(script);
+      });
+    </script>
+  </body>
+</html>

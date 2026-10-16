@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MergeForge webview harness</title>
+    <link rel="stylesheet" href="../dist/webview/main.css" />
+    <style>
+      /* Stand-ins for the --vscode-* variables a real webview host injects. */
+      body {
+        --vscode-editor-background: #1f1f1f;
+        --vscode-editor-foreground: #cccccc;
+        --vscode-foreground: #cccccc;
+        --vscode-font-family: -apple-system, 'Segoe UI', sans-serif;
+        --vscode-font-size: 13px;
+        --vscode-editorLineNumber-foreground: #6e7681;
+        --vscode-editorLineNumber-activeForeground: #cccccc;
+        --vscode-editor-selectionBackground: #264f78;
+        --vscode-editorCursor-foreground: #aeafad;
+        --vscode-panel-border: #2b2b2b;
+        --vscode-button-background: #0e639c;
+        --vscode-button-foreground: #ffffff;
+        --vscode-button-hoverBackground: #1177bb;
+        --vscode-button-secondaryBackground: #313131;
+        --vscode-button-secondaryForeground: #cccccc;
+        --vscode-editorGroupHeader-tabsBackground: #181818;
+        --vscode-inputValidation-warningBackground: #4d3800;
+        --vscode-inputValidation-warningBorder: #806300;
+        --vscode-testing-iconPassed: #4ec94e;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      // Stand in for the webview host so the real bundle runs unmodified.
+      const posted = [];
+      window.__mergeForgePosted = posted;
+      window.acquireVsCodeApi = () => ({
+        postMessage: (message) => {
+          posted.push(message);
+          if (message.type === 'ready') {
+            window.postMessage(window.__mergeForgeInit, '*');
+          }
+        },
+      });
+      window.__mergeForge = { workerUri: '../dist/webview/editor.worker.js' };
+
+      const left = [
+        'function greet(name) {',
+        '  // ours changed this line',
+        '  const greeting = `Hello, ${name}!`;',
+        '  console.log(greeting);',
+        '  return greeting;',
+        '}',
+        '',
+        'const OURS_ONLY = 1;',
+        'export default greet;',
+        '',
+      ].join('\n');
+
+      const base = [
+        'function greet(name) {',
+        '  const greeting = "hi";',
+        '  console.log(greeting);',
+        '  return greeting;',
+        '}',
+        '',
+        'export default greet;',
+        '',
+      ].join('\n');
+
+      const right = [
+        'function greet(name) {',
+        '  // theirs changed this line differently',
+        '  const greeting = `Hi there, ${name}.`;',
+        '  console.log(greeting);',
+        '  return greeting;',
+        '}',
+        '',
+        'function farewell() {',
+        '  return "bye";',
+        '}',
+        '',
+        'export default greet;',
+        '',
+      ].join('\n');
+
+      window.__mergeForgeInit = {
+        type: 'init',
+        payload: {
+          filePath: 'src/greet.js',
+          languageId: 'javascript',
+          left,
+          base,
+          right,
+          labels: { left: 'HELU-9257-fe-only-po-c', right: 'main' },
+          eol: { left: 'lf', base: 'lf', right: 'lf', conflict: false, suggested: 'lf' },
+          settings: { autoApplyNonConflicting: false },
+        },
+      };
+    </script>
+    <script>
+      // ?scenario= hooks: self-driving states for README screenshots and visual QA.
+      // Each scenario waits for the session, then feeds the same synthetic host
+      // messages the tests use. Also reusable from playwright/manual checks.
+      (() => {
+        const scenario = new URLSearchParams(location.search).get('scenario');
+        if (!scenario) {
+          return;
+        }
+        if (scenario === 'light') {
+          const light = {
+            '--vscode-editor-background': '#ffffff',
+            '--vscode-editor-foreground': '#3b3b3b',
+            '--vscode-foreground': '#3b3b3b',
+            '--vscode-editorLineNumber-foreground': '#98a0a8',
+            '--vscode-editor-selectionBackground': '#add6ff',
+            '--vscode-panel-border': '#d4d4d4',
+            '--vscode-button-secondaryBackground': '#e5e5e5',
+            '--vscode-button-secondaryForeground': '#3b3b3b',
+            '--vscode-editorGroupHeader-tabsBackground': '#f8f8f8',
+            '--vscode-editorWidget-background': '#f8f8f8',
+            '--vscode-dropdown-background': '#ffffff',
+            '--vscode-dropdown-foreground': '#3b3b3b',
+          };
+          for (const [key, value] of Object.entries(light)) {
+            document.body.style.setProperty(key, value);
+          }
+        }
+        const send = (data) => window.dispatchEvent(new MessageEvent('message', { data }));
+        const now = Math.floor(Date.now() / 1000);
+        const author = (name, initials, color, subject, daysAgo) => ({
+          sha: 'a'.repeat(40),
+          shortSha: 'aaaaaaaa',
+          name,
+          email: name.toLowerCase().replace(/\s+/g, '') + '@example.com',
+          timestamp: now - daysAgo * 86400,
+          subject,
+          initials,
+          color,
+          commitUrl: 'https://github.com/acme/widgets/commit/' + 'a'.repeat(40),
+        });
+        const chips = () => {
+          const blame = (window.__mergeForgePosted || []).filter((m) => m.type === 'blame').pop();
+          if (!blame) {
+            return;
+          }
+          send({
+            type: 'blameResult',
+            payload: blame.payload.ranges.map((r) => ({
+              chunkId: r.chunkId,
+              left: author('Jana Doe', 'JD', '#4e79a7', 'fix: metric rounding', 3),
+              right: author('Alex Behm', 'AB', '#e15759', 'refactor: rename props', 2),
+            })),
+          });
+        };
+        const scenarios = {
+          hero: chips,
+          light: chips,
+          ai: () => {
+            chips();
+            document.querySelector('.mf-toolbar .codicon-sparkle')?.closest('button')?.click();
+            send({ type: 'explainActivity', text: '⚙ Git: branch history' });
+            send({ type: 'explainActivity', text: '⚙ Read src/greet.js' });
+            send({
+              type: 'explainDelta',
+              text:
+                '### Conflict 1\nBoth branches rewrote the greeting: yours interpolates the name ' +
+                'with `Hello`, theirs with `Hi there`. **Combine them** — keep your template ' +
+                'string and adopt their tone.\n\n### Conflict 2\nYours added `OURS_ONLY`; theirs ' +
+                'added `farewell()`. These are independent — **take both**.\n',
+            });
+            send({ type: 'explainActivity', text: '⚙ Searched "greet" — 4 hits' });
+            send({ type: 'explainDone' });
+          },
+          history: () => {
+            document.querySelector('.mf-toolbar .codicon-history')?.closest('button')?.click();
+            send({
+              type: 'historyData',
+              payload: {
+                entries: [
+                  {
+                    ...author(
+                      'Jana Doe',
+                      'JD',
+                      '#4e79a7',
+                      'feat: add unit selector to metric modal',
+                      1,
+                    ),
+                    lane: 'yours',
+                  },
+                  {
+                    ...author(
+                      'Alex Behm',
+                      'AB',
+                      '#e15759',
+                      'refactor: rename metric props across components',
+                      2,
+                    ),
+                    lane: 'theirs',
+                  },
+                  {
+                    ...author(
+                      'Jana Doe',
+                      'JD',
+                      '#4e79a7',
+                      'fix: metric rounding for imperial units',
+                      4,
+                    ),
+                    lane: 'yours',
+                  },
+                  {
+                    ...author('Sam Ito', 'SI', '#59a14f', 'chore: bump chart dependencies', 6),
+                    lane: 'theirs',
+                  },
+                ],
+                mergeBase: { sha: '9'.repeat(40), timestamp: now - 21 * 86400 },
+                branches: { yours: 'feature/metrics', theirs: 'main' },
+              },
+            });
+          },
+        };
+        const run = scenarios[scenario];
+        if (!run) {
+          return;
+        }
+        const wait = setInterval(() => {
+          if (window.__mfSession && document.querySelector('.mf-toolbar button')) {
+            clearInterval(wait);
+            window.dispatchEvent(new Event('resize'));
+            setTimeout(run, 300);
+          }
+        }, 100);
+      })();
+    </script>
+    <script src="../dist/webview/main.js"></script>
+  </body>
+</html>

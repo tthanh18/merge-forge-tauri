@@ -1,0 +1,1111 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mf-hidden {
+  display: none !important;
+}
+
+/* --- banner (line-ending disagreement) ------------------------------------ */
+
+.mf-banner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--vscode-inputValidation-warningBackground, #4d3800);
+  border-bottom: 1px solid var(--vscode-inputValidation-warningBorder, #806300);
+  color: var(--vscode-foreground);
+}
+
+/* --- toolbar / footer ----------------------------------------------------- */
+
+.mf-toolbar,
+.mf-footer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+.mf-footer {
+  border-bottom: none;
+  border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  justify-content: flex-end;
+}
+
+.mf-counter {
+  margin-left: auto;
+  opacity: 0.85;
+  font-size: 0.9em;
+}
+
+.mf-counter.mf-done {
+  color: var(--vscode-testing-iconPassed, #4ec94e);
+  opacity: 1;
+}
+
+button {
+  padding: 3px 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  color: var(--vscode-button-secondaryForeground, #fff);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--vscode-button-secondaryHoverBackground, #45494e);
+}
+
+button.mf-primary {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+}
+
+button.mf-primary:hover:not(:disabled) {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- panes ---------------------------------------------------------------- */
+
+.mf-panes {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mf-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mf-pane-header {
+  padding: 4px 8px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-editorGroupHeader-tabsBackground, transparent);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.mf-editor {
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- gutter strips between panes ------------------------------------------ */
+
+.mf-strip {
+  position: relative;
+  /* Wide enough for three glyphs on a conflict row: × » ✦ */
+  flex: 0 0 52px;
+  overflow: hidden;
+  border-left: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-right: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-editor-background);
+}
+
+.mf-strip svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* --- chunk colours (JetBrains scheme) ------------------------------------- */
+
+.mf-mod {
+  background: rgba(58, 121, 189, 0.25);
+}
+
+.mf-add {
+  background: rgba(98, 150, 85, 0.28);
+}
+
+.mf-del {
+  background: rgba(128, 128, 128, 0.22);
+}
+
+.mf-conf {
+  background: rgba(199, 84, 80, 0.3);
+}
+
+/* Gutter stripe marking the chunk's kind. */
+.mf-stripe {
+  width: 3px !important;
+  margin-left: 2px;
+}
+
+.mf-stripe-mod {
+  background: rgba(58, 121, 189, 0.9);
+}
+
+.mf-stripe-add {
+  background: rgba(98, 150, 85, 0.9);
+}
+
+.mf-stripe-del {
+  background: rgba(128, 128, 128, 0.9);
+}
+
+.mf-stripe-conf {
+  background: rgba(199, 84, 80, 0.95);
+}
+
+/* Resolved chunks dim only their fill — the code stays fully readable (WebStorm). */
+.mf-mod.mf-resolved {
+  background: rgba(58, 121, 189, 0.1);
+}
+
+.mf-add.mf-resolved {
+  background: rgba(98, 150, 85, 0.1);
+}
+
+.mf-del.mf-resolved {
+  background: rgba(128, 128, 128, 0.09);
+}
+
+.mf-conf.mf-resolved {
+  background: rgba(199, 84, 80, 0.11);
+}
+
+/* Ignored = deliberately took neither side: neutral grey fill, no strike-through. */
+.mf-ignored {
+  background: rgba(128, 128, 128, 0.12) !important;
+}
+
+/* --- chunk action buttons in the gutter strips ---------------------------- */
+
+.mf-strip-buttons {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* WebStorm-style controls: a horizontal glyph pair at the chunk's first line. */
+.mf-chunk-controls {
+  display: flex;
+  position: absolute;
+  gap: 1px;
+  align-items: center;
+  height: 16px;
+  pointer-events: auto;
+}
+
+.mf-controls-left {
+  left: 2px;
+}
+
+.mf-controls-right {
+  right: 2px;
+}
+
+.mf-chunk-glyph {
+  width: 15px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.mf-chunk-glyph:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.25));
+  color: var(--vscode-focusBorder, #4daafc);
+  opacity: 1;
+}
+
+.mf-banner label {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* --- JetBrains-style toolbar additions ------------------------------------- */
+
+.mf-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+.mf-toolbar-label {
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+
+.mf-toolbar select {
+  padding: 2px 4px;
+  border: 1px solid var(--vscode-dropdown-border, transparent);
+  border-radius: 2px;
+  background: var(--vscode-dropdown-background, #3c3c3c);
+  color: var(--vscode-dropdown-foreground, #f0f0f0);
+  font-family: inherit;
+  font-size: 0.95em;
+}
+
+.mf-spacer {
+  flex: 1;
+}
+
+/* --- word-level diff emphasis ---------------------------------------------- */
+
+.mf-word-mod {
+  border-radius: 2px;
+  background: rgba(58, 121, 189, 0.5);
+}
+
+.mf-word-conf {
+  border-radius: 2px;
+  background: rgba(199, 84, 80, 0.55);
+}
+
+/* A decided chunk keeps its word marks so the two sides can still be blended by hand;
+   only the fill dims — the code stays fully readable. */
+.mf-word-resolved.mf-word-mod {
+  background: rgba(58, 121, 189, 0.2);
+}
+
+.mf-word-resolved.mf-word-conf {
+  background: rgba(199, 84, 80, 0.22);
+}
+
+/* Declined chunks fade furthest: those words were deliberately not taken. */
+.mf-word-ignored.mf-word-mod {
+  background: rgba(58, 121, 189, 0.08);
+}
+
+.mf-word-ignored.mf-word-conf {
+  background: rgba(199, 84, 80, 0.09);
+}
+
+.mf-banner button {
+  margin-left: 6px;
+}
+
+/* --- tinted alignment gaps (a chunk's absent lines, not a void) ------------- */
+
+.mf-zone-mod {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(58, 121, 189, 0.12),
+    rgba(58, 121, 189, 0.12) 4px,
+    rgba(58, 121, 189, 0.05) 4px,
+    rgba(58, 121, 189, 0.05) 8px
+  );
+}
+
+.mf-zone-add {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(98, 150, 85, 0.12),
+    rgba(98, 150, 85, 0.12) 4px,
+    rgba(98, 150, 85, 0.05) 4px,
+    rgba(98, 150, 85, 0.05) 8px
+  );
+}
+
+.mf-zone-del {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.12),
+    rgba(128, 128, 128, 0.12) 4px,
+    rgba(128, 128, 128, 0.05) 4px,
+    rgba(128, 128, 128, 0.05) 8px
+  );
+}
+
+.mf-zone-conf {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(199, 84, 80, 0.13),
+    rgba(199, 84, 80, 0.13) 4px,
+    rgba(199, 84, 80, 0.05) 4px,
+    rgba(199, 84, 80, 0.05) 8px
+  );
+}
+
+/* --- 1px chunk block edges (WebStorm) --------------------------------------- */
+
+.mf-edge-top.mf-edge-mod {
+  border-top: 1px solid rgba(58, 121, 189, 0.7);
+}
+
+.mf-edge-bottom.mf-edge-mod {
+  border-bottom: 1px solid rgba(58, 121, 189, 0.7);
+}
+
+.mf-edge-top.mf-edge-add {
+  border-top: 1px solid rgba(98, 150, 85, 0.7);
+}
+
+.mf-edge-bottom.mf-edge-add {
+  border-bottom: 1px solid rgba(98, 150, 85, 0.7);
+}
+
+.mf-edge-top.mf-edge-del {
+  border-top: 1px solid rgba(128, 128, 128, 0.65);
+}
+
+.mf-edge-bottom.mf-edge-del {
+  border-bottom: 1px solid rgba(128, 128, 128, 0.65);
+}
+
+.mf-edge-top.mf-edge-conf {
+  border-top: 1px solid rgba(199, 84, 80, 0.75);
+}
+
+.mf-edge-bottom.mf-edge-conf {
+  border-bottom: 1px solid rgba(199, 84, 80, 0.75);
+}
+
+/* --- "all changes processed" completion card -------------------------------- */
+
+.mf-pane-center {
+  position: relative;
+}
+
+.mf-done-card {
+  display: flex;
+  position: absolute;
+  z-index: 10;
+  top: 40px;
+  left: 50%;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 22px;
+  transform: translateX(-50%);
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, #252526);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  gap: 4px;
+}
+
+.mf-done-title {
+  color: var(--vscode-testing-iconPassed, #4ec94e);
+  font-weight: 600;
+}
+
+.mf-done-action {
+  color: var(--vscode-textLink-foreground, #3794ff);
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+.mf-done-action:hover {
+  text-decoration: underline;
+}
+
+/* --- navigation feedback: arrival flash + current-chunk outline ------------- */
+
+@keyframes mf-flash {
+  0% {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  100% {
+    background: rgba(255, 255, 255, 0);
+  }
+}
+
+.mf-flash {
+  animation: mf-flash 0.7s ease-out both;
+}
+
+.mf-current {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 3px 0 0 var(--vscode-focusBorder, #4daafc);
+}
+
+@keyframes mf-band-flash {
+  0% {
+    fill-opacity: 0.8;
+  }
+
+  100% {
+    fill-opacity: 0.3;
+  }
+}
+
+.mf-band-current {
+  stroke-width: 2;
+}
+
+.mf-band-flash {
+  animation: mf-band-flash 0.7s ease-out both;
+}
+
+/* --- codicon sizing in our buttons ------------------------------------------ */
+
+.mf-toolbar button .codicon,
+.mf-chunk-glyph .codicon {
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.mf-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+}
+
+/* --- band colours (dark default), hover, and the light-theme palette --------- */
+
+.mf-band {
+  stroke-width: 1;
+}
+
+.mf-band-conf {
+  fill: rgba(199, 84, 80, 0.3);
+  stroke: rgba(199, 84, 80, 0.75);
+}
+
+.mf-band-add {
+  fill: rgba(98, 150, 85, 0.28);
+  stroke: rgba(98, 150, 85, 0.75);
+}
+
+.mf-band-del {
+  fill: rgba(128, 128, 128, 0.25);
+  stroke: rgba(128, 128, 128, 0.7);
+}
+
+.mf-band-mod {
+  fill: rgba(58, 121, 189, 0.26);
+  stroke: rgba(58, 121, 189, 0.75);
+}
+
+.mf-band,
+.mf-chunk-glyph {
+  cursor: pointer;
+}
+
+.mf-hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mf-band-hover {
+  stroke-width: 2;
+  filter: brightness(1.25);
+}
+
+body.mf-light .mf-hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.mf-light .mf-mod {
+  background: rgba(21, 101, 192, 0.14);
+}
+
+body.mf-light .mf-add {
+  background: rgba(46, 125, 50, 0.15);
+}
+
+body.mf-light .mf-del {
+  background: rgba(97, 97, 97, 0.13);
+}
+
+body.mf-light .mf-conf {
+  background: rgba(198, 40, 40, 0.15);
+}
+
+body.mf-light .mf-word-mod {
+  background: rgba(21, 101, 192, 0.3);
+}
+
+body.mf-light .mf-word-conf {
+  background: rgba(198, 40, 40, 0.32);
+}
+
+body.mf-light .mf-word-resolved.mf-word-mod {
+  background: rgba(21, 101, 192, 0.13);
+}
+
+body.mf-light .mf-word-resolved.mf-word-conf {
+  background: rgba(198, 40, 40, 0.14);
+}
+
+body.mf-light .mf-word-ignored.mf-word-mod {
+  background: rgba(21, 101, 192, 0.05);
+}
+
+body.mf-light .mf-word-ignored.mf-word-conf {
+  background: rgba(198, 40, 40, 0.06);
+}
+
+body.mf-light .mf-flash {
+  animation: none;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.mf-light .mf-band-conf {
+  fill: rgba(198, 40, 40, 0.18);
+  stroke: rgba(198, 40, 40, 0.6);
+}
+
+body.mf-light .mf-band-add {
+  fill: rgba(46, 125, 50, 0.18);
+  stroke: rgba(46, 125, 50, 0.6);
+}
+
+body.mf-light .mf-band-del {
+  fill: rgba(97, 97, 97, 0.16);
+  stroke: rgba(97, 97, 97, 0.55);
+}
+
+body.mf-light .mf-band-mod {
+  fill: rgba(21, 101, 192, 0.16);
+  stroke: rgba(21, 101, 192, 0.6);
+}
+
+/* Light theme: the 0.9 authorship + history elements. */
+body.mf-light .mf-author-chip {
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+body.mf-light .mf-author-pop,
+body.mf-light .mf-history-row {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.mf-light .mf-history-row {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.mf-light .mf-history-row:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+body.mf-light .mf-zone-mod {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(21, 101, 192, 0.1),
+    rgba(21, 101, 192, 0.1) 4px,
+    rgba(21, 101, 192, 0.04) 4px,
+    rgba(21, 101, 192, 0.04) 8px
+  );
+}
+
+body.mf-light .mf-zone-add {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(46, 125, 50, 0.1),
+    rgba(46, 125, 50, 0.1) 4px,
+    rgba(46, 125, 50, 0.04) 4px,
+    rgba(46, 125, 50, 0.04) 8px
+  );
+}
+
+body.mf-light .mf-zone-del {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(97, 97, 97, 0.1),
+    rgba(97, 97, 97, 0.1) 4px,
+    rgba(97, 97, 97, 0.04) 4px,
+    rgba(97, 97, 97, 0.04) 8px
+  );
+}
+
+body.mf-light .mf-zone-conf {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(198, 40, 40, 0.11),
+    rgba(198, 40, 40, 0.11) 4px,
+    rgba(198, 40, 40, 0.04) 4px,
+    rgba(198, 40, 40, 0.04) 8px
+  );
+}
+
+/* --- AI explain drawer ----------------------------------------------------- */
+
+.mf-explain {
+  display: flex;
+  flex-direction: column;
+  max-height: 40%;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+}
+
+.mf-explain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.2));
+  font-weight: 600;
+  font-size: 0.92em;
+}
+
+.mf-explain-close {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.mf-explain-close:hover {
+  opacity: 1;
+}
+
+.mf-explain-body {
+  overflow-y: auto;
+  padding: 6px 14px 10px;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.mf-explain-body h3,
+.mf-explain-body h4,
+.mf-explain-body h5,
+.mf-explain-body h6 {
+  margin: 10px 0 4px;
+  font-size: 1em;
+}
+
+.mf-explain-body p {
+  margin: 4px 0;
+}
+
+.mf-explain-body ul {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.mf-explain-body pre {
+  margin: 6px 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: 3px;
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.14));
+}
+
+.mf-explain-body code {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.94em;
+}
+
+.mf-explain-body p code,
+.mf-explain-body li code {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--vscode-textCodeBlock-background, rgba(128, 128, 128, 0.14));
+}
+
+.mf-explain-waiting {
+  opacity: 0.75;
+}
+
+/* Tool-progress lines in the AI stream: present but deliberately quiet. */
+.mf-explain-activity {
+  opacity: 0.6;
+  font-size: 0.88em;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.mf-explain-error {
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.mf-explain-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--vscode-editorCursor-foreground, #aeafad);
+  animation: mf-cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes mf-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.mf-explain-setup {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 3px;
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+  cursor: pointer;
+}
+
+.mf-explain-setup:hover {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+body.mf-light .mf-explain-body pre,
+body.mf-light .mf-explain-body p code,
+body.mf-light .mf-explain-body li code {
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.07));
+}
+
+.mf-explain-truncated {
+  margin-top: 8px;
+  color: var(--vscode-inputValidation-warningBorder, #cca700);
+  font-size: 0.9em;
+}
+
+.mf-explain-resolve {
+  margin-left: auto;
+  margin-right: 8px;
+  padding: 2px 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 3px;
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+  font-size: 0.92em;
+  cursor: pointer;
+}
+
+.mf-explain-resolve:hover:not(:disabled) {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+.mf-explain-resolve:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mf-explain-report {
+  margin-top: 8px;
+  color: var(--vscode-testing-iconPassed, #4ec94e);
+  font-size: 0.92em;
+}
+
+/* --- authorship chips + popover ---------------------------------------------- */
+
+.mf-editor {
+  position: relative;
+}
+
+.mf-author-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mf-author-chip {
+  display: inline-flex;
+  position: absolute;
+  left: 2px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mf-author-chip:hover {
+  border-color: var(--vscode-focusBorder, #4daafc);
+}
+
+.mf-author-chip-static {
+  position: static;
+  cursor: default;
+}
+
+.mf-author-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mf-author-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.mf-author-pop {
+  display: flex;
+  position: fixed;
+  z-index: 50;
+  flex-direction: column;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 8px 10px;
+  gap: 4px;
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #252526);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.mf-author-pop-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.mf-author-pop-name {
+  font-weight: 600;
+}
+
+.mf-author-pop-meta {
+  opacity: 0.7;
+  font-size: 0.88em;
+}
+
+.mf-author-pop-subject {
+  font-size: 0.92em;
+}
+
+.mf-author-pop-link {
+  color: var(--vscode-textLink-foreground, #3794ff);
+  text-decoration: none;
+  font-size: 0.92em;
+}
+
+.mf-author-pop-link:hover {
+  text-decoration: underline;
+}
+
+.mf-author-pop-email {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85em;
+}
+
+.mf-author-pop-email:hover {
+  opacity: 1;
+}
+
+/* --- history timeline --------------------------------------------------------- */
+
+.mf-history {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mf-history.mf-hidden {
+  display: none;
+}
+
+.mf-history-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  font-weight: 600;
+  font-size: 0.92em;
+}
+
+.mf-history-branch-yours {
+  color: var(--vscode-charts-blue, #3794ff);
+}
+
+.mf-history-branch-theirs {
+  color: var(--vscode-charts-purple, #b180d7);
+}
+
+.mf-history-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 8px 14px;
+  overflow-y: auto;
+  gap: 4px;
+}
+
+/* One chronological column; the lane decides which half a row leans into. */
+.mf-history-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 55%;
+  padding: 5px 10px;
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.25));
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.06));
+  color: var(--vscode-foreground);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mf-history-row:hover {
+  border-color: var(--vscode-focusBorder, #4daafc);
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.12));
+}
+
+.mf-history-yours {
+  align-self: flex-start;
+  border-left: 3px solid var(--vscode-charts-blue, #3794ff);
+}
+
+.mf-history-theirs {
+  align-self: flex-end;
+  border-right: 3px solid var(--vscode-charts-purple, #b180d7);
+}
+
+.mf-history-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mf-history-subject {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mf-history-meta {
+  opacity: 0.65;
+  font-size: 0.85em;
+}
+
+.mf-history-empty {
+  opacity: 0.7;
+  padding: 12px;
+}
+
+.mf-history-base {
+  padding: 6px 14px;
+  border-top: 1px dashed var(--vscode-panel-border, rgba(128, 128, 128, 0.4));
+  opacity: 0.75;
+  text-align: center;
+  font-size: 0.88em;
+}
+
+.mf-toolbar button.mf-toggled {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #fff);
+}
+
+/* --- per-chunk AI menu ------------------------------------------------------- */
+
+.mf-ai-menu {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #252526);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.mf-ai-menu button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--vscode-foreground);
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.mf-ai-menu button:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+.mf-explain-ask {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.2));
+}
+
+.mf-explain-ask input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 3px;
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, #ccc);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.mf-explain-ask button {
+  padding: 4px 12px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 3px;
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  color: var(--vscode-button-secondaryForeground, #fff);
+  cursor: pointer;
+}
+
+.mf-explain-ask button:hover:not(:disabled) {
+  background: var(--vscode-button-secondaryHoverBackground, #45494e);
+}
+
+.mf-explain-ask input:disabled,
+.mf-explain-ask button:disabled {
+  opacity: 0.5;
+}

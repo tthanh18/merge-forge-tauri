@@ -1,0 +1,11 @@
+**
+!dist/**
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+
+# Never ship build noise, sourcemaps, or OS cruft.
+dist/**/*.map
+**/.DS_Store
+!media/**

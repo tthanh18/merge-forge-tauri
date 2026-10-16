@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MergeForge harness — line-ending conflict</title>
+    <link rel="stylesheet" href="../dist/webview/main.css" />
+    <style>
+      body {
+        --vscode-editor-background: #1f1f1f;
+        --vscode-editor-foreground: #cccccc;
+        --vscode-foreground: #cccccc;
+        --vscode-font-family: -apple-system, 'Segoe UI', sans-serif;
+        --vscode-font-size: 13px;
+        --vscode-editorLineNumber-foreground: #6e7681;
+        --vscode-panel-border: #2b2b2b;
+        --vscode-button-background: #0e639c;
+        --vscode-button-foreground: #ffffff;
+        --vscode-button-secondaryBackground: #313131;
+        --vscode-button-secondaryForeground: #cccccc;
+        --vscode-editorGroupHeader-tabsBackground: #181818;
+        --vscode-inputValidation-warningBackground: #4d3800;
+        --vscode-inputValidation-warningBorder: #806300;
+        --vscode-testing-iconPassed: #4ec94e;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const posted = [];
+      window.__mergeForgePosted = posted;
+      window.acquireVsCodeApi = () => ({
+        postMessage: (m) => {
+          posted.push(m);
+          if (m.type === 'ready') window.postMessage(window.__mergeForgeInit, '*');
+        },
+      });
+      window.__mergeForge = { workerUri: '../dist/webview/editor.worker.js' };
+
+      // Mirrors crlf.txt in the fixture repo: your side is CRLF, theirs is LF.
+      // Contents arrive LF-normalized; the disagreement is carried in `eol`.
+      window.__mergeForgeInit = {
+        type: 'init',
+        payload: {
+          filePath: 'crlf.txt',
+          languageId: 'plaintext',
+          left: 'first\nOURS second\nthird\n',
+          base: 'first\nsecond\nthird\n',
+          right: 'first\nsecond\nTHEIRS third\n',
+          labels: { left: 'Yours (local)', right: 'Theirs (incoming)' },
+          eol: { left: 'crlf', base: 'crlf', right: 'lf', conflict: true, suggested: 'crlf' },
+          settings: { autoApplyNonConflicting: false },
+        },
+      };
+    </script>
+    <script src="../dist/webview/main.js"></script>
+  </body>
+</html>

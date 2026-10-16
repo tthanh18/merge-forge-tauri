@@ -1,0 +1,288 @@
+{
+  "name": "merge-forge",
+  "displayName": "MergeForge — JetBrains-style Conflict Resolver",
+  "description": "Resolve Git merge conflicts in a JetBrains/WebStorm-style three-pane visual merge editor.",
+  "version": "1.0.0",
+  "publisher": "byte-forge",
+  "license": "MIT",
+  "private": true,
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#16171f",
+    "theme": "dark"
+  },
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "merge",
+    "conflict",
+    "git",
+    "three-way merge",
+    "diff3",
+    "jetbrains"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ognjenmarcheta/merge-forge.git"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "mergeForge.resolve",
+        "title": "Merge Forge: Resolve Conflicts in File...",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "mergeForge.resolveThis",
+        "title": "Resolve in Merge Forge",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "mergeForge.pickConflicted",
+        "title": "Merge Forge: Show All Conflicted Files"
+      },
+      {
+        "command": "mergeForge.nextChange",
+        "title": "Merge Forge: Next Change"
+      },
+      {
+        "command": "mergeForge.prevChange",
+        "title": "Merge Forge: Previous Change"
+      },
+      {
+        "command": "mergeForge.applyAllNonConflicting",
+        "title": "Merge Forge: Apply All Non-Conflicting Changes"
+      },
+      {
+        "command": "mergeForge.diagnostics",
+        "title": "Merge Forge: Show Git Diagnostics"
+      },
+      {
+        "command": "mergeForge.showConflicts",
+        "title": "Merge Forge: Show Conflicts"
+      },
+      {
+        "command": "mergeForge.abortMerge",
+        "title": "Merge Forge: Abort Merge / Rebase / Cherry-Pick"
+      },
+      {
+        "command": "mergeForge.setApiKey",
+        "title": "Merge Forge: Set AI Provider & API Key"
+      },
+      {
+        "command": "mergeForge.clearApiKey",
+        "title": "Merge Forge: Clear AI API Keys"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "mergeForge.resolveThis",
+          "group": "7_modification",
+          "when": "mergeForge.hasConflicts && resourcePath in mergeForge.conflictedPaths"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "mergeForge.resolveThis",
+          "group": "inline",
+          "when": "scmProvider == git && scmResourceGroup == merge"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "mergeForge.resolveThis",
+          "group": "navigation",
+          "when": "mergeForge.editorHasConflictMarkers"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mergeForge.resolveThis",
+          "when": "false"
+        },
+        {
+          "command": "mergeForge.nextChange",
+          "when": "mergeForge.panelFocused"
+        },
+        {
+          "command": "mergeForge.prevChange",
+          "when": "mergeForge.panelFocused"
+        },
+        {
+          "command": "mergeForge.applyAllNonConflicting",
+          "when": "mergeForge.panelFocused"
+        }
+      ]
+    },
+    "walkthroughs": [
+      {
+        "id": "mergeForge.gettingStarted",
+        "title": "Resolve merges the JetBrains way",
+        "description": "Three panes, gutter arrows, and an AI that reads your repo.",
+        "steps": [
+          {
+            "id": "openConflict",
+            "title": "Open a conflicted file",
+            "description": "When a merge or rebase hits conflicts, the Conflicts dialog opens automatically — or pick a file yourself.\n[Open a Conflicted File](command:mergeForge.resolve)",
+            "media": {
+              "image": "media/hero.png",
+              "altText": "The three-pane merge editor"
+            },
+            "completionEvents": [
+              "onCommand:mergeForge.resolve"
+            ]
+          },
+          {
+            "id": "resolveChunks",
+            "title": "Resolve with the gutter controls",
+            "description": "Click » or « to accept a side, × to ignore it, or the wand to apply everything non-conflicting. F7 steps through changes; the result pane is fully editable.",
+            "media": {
+              "image": "media/hero.png",
+              "altText": "Gutter arrows and connector bands"
+            }
+          },
+          {
+            "id": "setupAi",
+            "title": "Set up the AI assistant",
+            "description": "With GitHub Copilot it works out of the box. Otherwise pick a provider and paste a key — then ✦ explains conflicts and ▶ fixes the whole file.\n[Set AI Provider & Key](command:mergeForge.setApiKey)",
+            "media": {
+              "image": "media/ai.png",
+              "altText": "AI explanation with live tool activity"
+            },
+            "completionEvents": [
+              "onCommand:mergeForge.setApiKey"
+            ]
+          }
+        ]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "mergeForge.nextChange",
+        "key": "f7",
+        "when": "mergeForge.panelFocused"
+      },
+      {
+        "command": "mergeForge.prevChange",
+        "key": "shift+f7",
+        "when": "mergeForge.panelFocused"
+      }
+    ],
+    "configuration": {
+      "title": "Merge Forge",
+      "properties": {
+        "mergeForge.autoOpenOnConflict": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open the Merge Forge editor when opening a file with merge conflicts."
+        },
+        "mergeForge.autoShowConflicts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open the Conflicts dialog automatically when a merge, rebase, or cherry-pick hits conflicts."
+        },
+        "mergeForge.lineEnding": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "lf",
+            "crlf"
+          ],
+          "default": "auto",
+          "description": "Line ending used for the merge result when the sides disagree. \"auto\" prefers your local side's dominant line ending."
+        },
+        "mergeForge.autoApplyNonConflicting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Apply all non-conflicting changes automatically when the merge editor opens."
+        },
+        "mergeForge.autoAdvance": {
+          "type": "boolean",
+          "default": false,
+          "description": "After applying a resolved file, open the next conflicted file immediately instead of showing a notification."
+        },
+        "mergeForge.ai.provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "deepseek",
+            "kimi",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Anthropic (Claude) — default model claude-opus-4-8",
+            "OpenAI — default model gpt-5.6-sol",
+            "DeepSeek — default model deepseek-v4-flash",
+            "Kimi / Moonshot — default model kimi-k2.6",
+            "Any OpenAI-compatible endpoint (OpenRouter, Ollama, proxies) — set mergeForge.ai.customBaseUrl and customModel"
+          ],
+          "default": "anthropic",
+          "description": "AI provider used by \"Explain conflicts with AI\" when the editor offers no models of its own. Set up with the \"Merge Forge: Set AI Provider & API Key\" command."
+        },
+        "mergeForge.ai.model": {
+          "type": "string",
+          "default": "auto",
+          "description": "Model for AI explanations. \"auto\" uses the active provider's default (see mergeForge.ai.provider); any other value overrides it. The VS Code Language Model API path uses your Copilot model instead."
+        },
+        "mergeForge.ai.customBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL of the Custom OpenAI-compatible endpoint, e.g. http://localhost:11434/v1 for Ollama or https://openrouter.ai/api/v1. Only used when mergeForge.ai.provider is \"custom\"."
+        },
+        "mergeForge.ai.customModel": {
+          "type": "string",
+          "default": "",
+          "description": "Model ID for the Custom endpoint (mergeForge.ai.model \"auto\" resolves to this when the provider is \"custom\")."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs --production",
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc -p tsconfig.extension.json --noEmit && tsc -p tsconfig.webview.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "eval": "node dev/eval/replay.mjs",
+    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run build && pnpm run test",
+    "vscode:prepublish": "pnpm run build",
+    "package": "vsce package --no-dependencies",
+    "desktop:dev": "pnpm --dir desktop dev",
+    "desktop:build": "pnpm --dir desktop build"
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.16",
+    "@ai-sdk/openai-compatible": "^3.0.12",
+    "@eslint/js": "^9.31.0",
+    "@types/node": "^20.19.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.6.0",
+    "ai": "^7.0.31",
+    "diff": "^9.0.0",
+    "esbuild": "^0.25.5",
+    "eslint": "^9.31.0",
+    "globals": "^17.7.0",
+    "monaco-editor": "^0.52.2",
+    "node-diff3": "^3.1.2",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^3.2.4"
+  }
+}

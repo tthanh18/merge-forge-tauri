@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MergeForge harness — Conflicts dialog</title>
+    <link rel="stylesheet" href="../dist/webview/conflicts.css" />
+    <style>
+      body {
+        --vscode-editor-background: #1f1f1f;
+        --vscode-foreground: #cccccc;
+        --vscode-font-family: -apple-system, 'Segoe UI', sans-serif;
+        --vscode-font-size: 13px;
+        --vscode-panel-border: #3c3c3c;
+        --vscode-editorGroupHeader-tabsBackground: #2a2a2a;
+        --vscode-list-hoverBackground: rgba(128, 128, 128, 0.12);
+        --vscode-list-activeSelectionBackground: #04395e;
+        --vscode-list-activeSelectionForeground: #ffffff;
+        --vscode-button-background: #0e639c;
+        --vscode-button-foreground: #ffffff;
+        --vscode-button-hoverBackground: #1177bb;
+        --vscode-button-secondaryBackground: #3a3d41;
+        --vscode-button-secondaryForeground: #f0f0f0;
+        --vscode-gitDecoration-deletedResourceForeground: #c74e39;
+        --vscode-gitDecoration-addedResourceForeground: #81b88b;
+        --vscode-testing-iconPassed: #4ec94e;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const posted = [];
+      window.__mergeForgePosted = posted;
+      window.acquireVsCodeApi = () => ({
+        postMessage: (message) => {
+          posted.push(message);
+          if (message.type === 'ready') {
+            window.postMessage({ type: 'conflicts', payload: window.__conflictsData }, '*');
+          }
+          if (message.type === 'acceptSide') {
+            // Simulate the host resolving those files and pushing a fresh list.
+            const remaining = window.__conflictsData.files.filter(
+              (f) => !message.payload.paths.includes(f.path),
+            );
+            window.__conflictsData = { ...window.__conflictsData, files: remaining };
+            window.postMessage({ type: 'conflicts', payload: window.__conflictsData }, '*');
+          }
+        },
+      });
+
+      window.__conflictsData = {
+        totalAtStart: 5,
+        branches: { yours: 'HELU-9257-fe-only-po-c', theirs: 'main' },
+        operation: 'merge',
+        files: [
+          {
+            path: 'packages/apps/main/src/core/featureFlags/app-features.ts',
+            yours: 'Modified',
+            theirs: 'Modified',
+            mergeable: true,
+          },
+          {
+            path: 'packages/apps/main/src/features/metrics/components/CreateMetricModal.vue',
+            yours: 'Modified',
+            theirs: 'Modified',
+            mergeable: true,
+          },
+          {
+            path: 'packages/apps/main/src/locales/index.ts',
+            yours: 'Modified',
+            theirs: 'Modified',
+            mergeable: true,
+          },
+          { path: 'docs/notes.md', yours: 'Modified', theirs: 'Deleted', mergeable: false },
+          { path: 'newfile.ts', yours: 'Added', theirs: 'Added', mergeable: true },
+        ],
+      };
+    </script>
+    <script src="../dist/webview/conflicts.js"></script>
+  </body>
+</html>

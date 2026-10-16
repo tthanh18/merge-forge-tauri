@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.vsix
+.DS_Store
+coverage/
+
+# Tauri desktop app
+desktop/node_modules/
+desktop/ui-dist/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# dev harness server artifacts
+.harness-server.pid
